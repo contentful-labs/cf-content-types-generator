@@ -210,13 +210,12 @@ As input a [json file](https://github.com/contentful/contentful-cli/tree/master/
 
 ### Output 
 ```typescript
-import * as CFRichTextTypes from "@contentful/rich-text-types";
 import * as Contentful from "contentful";
 
 export interface TypeArtistFields {
     name: Contentful.EntryFields.Symbol;
     profilePicture?: Contentful.Asset;
-    bio?: CFRichTextTypes.Block | CFRichTextTypes.Inline;
+    bio?: Contentful.EntryFields.RichText;
 }
 
 export type TypeArtist = Contentful.Entry<TypeArtistFields>;

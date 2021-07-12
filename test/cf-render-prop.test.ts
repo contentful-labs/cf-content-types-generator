@@ -209,4 +209,22 @@ describe('A renderProp function', () => {
 
         expect(renderProp(field)).to.equal('Contentful.Entry<TypeComponentCtaFields | TypeComponentFaqFields | TypeWrapperImageFields | TypeWrapperVideoFields>[]');
     });
+
+    it('can evaluate a "RichText" type', () => {
+      const field = JSON.parse(`
+      {
+        "id": "text",
+        "name": "Text",
+        "type": "RichText",
+        "localized": false,
+        "required": false,
+        "validations": [
+        ],
+        "disabled": false,
+        "omitted": false
+      }
+      `);
+
+      expect(renderProp(field)).to.equal('Contentful.EntryFields.RichText');
+  });
 });
