@@ -17,6 +17,7 @@
         - [Remote](#remote)
     - [Input](#input)
     - [Output](#output)
+    - [Custom Renderer](#custom-renderer)
     - [Direct Usage](#direct-usage)
     - [Browser Usage](#browser-usage)
 
@@ -232,10 +233,41 @@ export type TypeArtwork = Contentful.Entry<TypeArtworkFields>;
 ```
 This all only works if you add the [`contentful`](https://www.npmjs.com/package/contentful) package to your target project to get all relevant type definitions.
 
+### Custom Renderer
+
+Extend the default `ContentTypeRenderer` class for custom rendering.
+
+Relevant methods to override:
+
+| Methods             | Description                                                  | Override                                                     |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `render`            | Enriches a `SourceFile` with all relevant nodes              | To control content type rendering (you should know what you're doing) |
+| `getContext`        | Returns new render context object                            | To define custom type renderer and custom module name function |
+| `addDefaultImports` | Define set of default imports added to every file            | To control default imported modules                          |
+| `renderField`       | Returns a `PropertySignatureStructure` representing a field property | To control Field property rendering                          |
+| `renderFieldType`   | Returns a `string` representing a field type                 | To control field type rendering (recommended)                |
+| `renderEntry`       | Returns a `TypeAliasDeclarationStructure` representing an entry type alias | To control entry type alias rendering                        |
+| `renderEntryType`   | Returns a `string` representing an entry type                | To control entry type rendering (recommended)                |
+
+> Table represents order of execution
+
+Set content type renderer:
+
+```typescript
+import CFDefinitionsBuilder from "cf-content-types-generator/lib/cf-definitions-builder";
+import {ContentTypeRenderer} from 'cf-content-types-generator/lib/type-renderer';
+
+const renderer = new ContentTypeRenderer();
+const builder = new CFDefinitionsBuilder(renderer); 
+```
+
 ### Direct Usage
+
 If you're not a CLI person, or you want to integrate it with your tooling workflow, you can also directly use the `CFDefinitionsBuilder` from `cf-definitions-builder.ts`
 
 ```typescript
+import CFDefinitionsBuilder from "cf-content-types-generator/lib/cf-definitions-builder";
+
 const stringContent = new CFDefinitionsBuilder()
     .appendType({
         id: "rootId",

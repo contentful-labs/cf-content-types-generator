@@ -32,7 +32,8 @@
     "lodash": "^4.17.15",
     "ts-morph": "9.1.0",
     "ts-node": "^9.0.0",
-    "tslib": "^2"
+    "tslib": "^2",
+    "type-fest": "^1.0.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",

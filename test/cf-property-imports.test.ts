@@ -1,5 +1,6 @@
 import {expect} from '@oclif/test';
 import {propertyImports} from '../src/cf-property-imports';
+import { createDefaultContext } from '../src/type-renderer';
 
 describe('A typeImports function', () => {
     it('returns imports for referenced Entry', () => {
@@ -22,7 +23,7 @@ describe('A typeImports function', () => {
           "linkType": "Entry"
         }
         `);
-        expect(propertyImports(field)).to.eql([{
+        expect(propertyImports(field, createDefaultContext())).to.eql([{
             moduleSpecifier: './TypeTopicCategory',
             namedImports: ['TypeTopicCategoryFields'],
         }]);
@@ -42,7 +43,7 @@ describe('A typeImports function', () => {
           "omitted": false
         }
         `);
-        expect(propertyImports(field)).to.eql([]);
+        expect(propertyImports(field, createDefaultContext())).to.eql([]);
     });
     it('returns imports for referenced Entry without validations', () => {
         const field = JSON.parse(`
@@ -58,7 +59,7 @@ describe('A typeImports function', () => {
           "linkType": "Entry"
         }
         `);
-        expect(propertyImports(field)).to.eql([{
+        expect(propertyImports(field, createDefaultContext())).to.eql([{
             moduleSpecifier: './TypeCategory',
             namedImports: ['TypeCategoryFields'],
         }]);

@@ -1,8 +1,7 @@
-import {renderLiteralType} from './renderer/render-literal-type';
-import {renderUnionType} from './renderer/render-union-type';
+import {renderTypeLiteral, renderTypeUnion} from '../renderer';
 import {Field} from 'contentful';
 
-export const anyType = (field: Field): string => {
+export const renderPropAny = (field: Field): string => {
     if (field.validations?.length > 0) {
         const includesValidation = field.validations.find(validation => validation.in);
         if (includesValidation && includesValidation.in) {
@@ -12,11 +11,11 @@ export const anyType = (field: Field): string => {
                     field.type === 'Text' ||
                     field.type === 'RichText'
                 ) {
-                    return renderLiteralType;
+                    return renderTypeLiteral;
                 }
                 return (value: string) => value.toString();
             };
-            return renderUnionType(includesValidation.in.map(mapper()));
+            return renderTypeUnion(includesValidation.in.map(type => mapper()(type)));
         }
     }
 

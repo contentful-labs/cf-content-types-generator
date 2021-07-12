@@ -1,36 +1,23 @@
-import {Field} from 'contentful';
 import * as path from 'path';
 import {
     forEachStructureChild,
     ImportDeclarationStructure,
-    InterfaceDeclaration,
     OptionalKind,
     Project,
     ScriptTarget,
     SourceFile,
     StructureKind,
 } from 'ts-morph';
-import {propertyImports} from './cf-property-imports';
-import {renderProp} from './renderer/cf-render-prop';
-import {renderGenericType} from './renderer/render-generic-type';
-import {moduleFieldsName, moduleName} from './utils';
-
-export type CFContentType = {
-    name: string;
-    id: string;
-    sys: {
-        id: string;
-        type: string;
-    };
-    fields: Field[];
-};
-
-export type WriteCallback = (filePath: string, content: string) => Promise<void>
+import {ContentTypeRenderer, DefaultContentTypeRenderer} from './type-renderer';
+import {CFContentType, WriteCallback} from './types';
 
 export default class CFDefinitionsBuilder {
     private readonly project: Project;
 
-    constructor() {
+    private contentTypeRenderer: ContentTypeRenderer;
+
+    constructor(contentTypeRenderer?: ContentTypeRenderer) {
+        this.contentTypeRenderer = contentTypeRenderer || new DefaultContentTypeRenderer();
         this.project = new Project({
             useInMemoryFileSystem: true,
             compilerOptions: {
@@ -45,15 +32,8 @@ export default class CFDefinitionsBuilder {
             throw new Error('given data is not describing a ContentType');
         }
 
-        const file = this.addFile(moduleName(model.sys.id));
-
-        this.addDefaultImports(file);
-
-        const interfaceDeclaration = this.createInterfaceDeclaration(file, moduleFieldsName(model.sys.id));
-
-        model.fields.forEach(field => this.addProperty(file, interfaceDeclaration, field));
-
-        this.addEntryTypeAlias(file, model.sys.id, moduleFieldsName(model.sys.id));
+        const file = this.addFile(this.contentTypeRenderer.createContext().moduleName(model.sys.id));
+        this.contentTypeRenderer.render(model, file);
 
         file.organizeImports({
             ensureNewLineAtEndOfFile: true,
@@ -127,10 +107,6 @@ export default class CFDefinitionsBuilder {
             });
     };
 
-    private createInterfaceDeclaration = (file: SourceFile, name: string): InterfaceDeclaration => {
-        return file.addInterface({name, isExported: true});
-    };
-
     private getIndexFile = (): SourceFile | undefined => {
         return this.project.getSourceFile(file => {
             return file.getBaseNameWithoutExtension() === 'index';
@@ -149,7 +125,10 @@ export default class CFDefinitionsBuilder {
         files.forEach(fileName => {
             indexFile.addExportDeclaration({
                 isTypeOnly: true,
-                namedExports: [moduleName(fileName), moduleFieldsName(fileName)],
+                namedExports: [
+                    this.contentTypeRenderer.createContext().moduleName(fileName),
+                    this.contentTypeRenderer.createContext().moduleFieldsName(fileName),
+                ],
                 moduleSpecifier: `./${fileName}`,
             });
         });
@@ -162,47 +141,6 @@ export default class CFDefinitionsBuilder {
         if (indexFile) {
             this.project.removeSourceFile(indexFile);
         }
-    }
-
-    private addEntryTypeAlias = (file: SourceFile, aliasName: string, entryType: string) => {
-        file.addTypeAlias({
-            isExported: true,
-            name: moduleName(aliasName),
-            type: renderGenericType('Contentful.Entry', entryType),
-        });
-    };
-
-    private addProperty = (
-        file: SourceFile,
-        declaration: InterfaceDeclaration,
-        field: Field,
-    ): void => {
-        declaration.addProperty({
-            name: field.id,
-            hasQuestionToken: field.omitted || (!field.required),
-            type: renderProp(field),
-        });
-
-        // eslint-disable-next-line no-warning-comments
-        // TODO: dynamically define imports based on usage
-        file.addImportDeclaration({
-            moduleSpecifier: 'contentful',
-            namespaceImport: 'Contentful',
-        });
-
-        file.addImportDeclaration({
-            moduleSpecifier: '@contentful/rich-text-types',
-            namespaceImport: 'CFRichTextTypes',
-        });
-
-        file.addImportDeclarations(propertyImports(field, file.getBaseNameWithoutExtension()));
-    };
-
-    private addDefaultImports(file: SourceFile) {
-        file.addImportDeclaration({
-            moduleSpecifier: 'contentful',
-            namespaceImport: 'Contentful',
-        });
     }
 }
 
